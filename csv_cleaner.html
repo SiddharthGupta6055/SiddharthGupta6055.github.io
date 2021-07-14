@@ -1,0 +1,179 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	@import url('https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css');
+	@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+		body{
+			margin: 0;
+			padding: 0;
+			background-color: #e3f2fd;
+			align-items: center;
+			justify-items: center;
+			display: flex;
+			font-family: 'Roboto', sans-serif;
+		}
+		
+		label,input{
+			margin:5px 5px;
+		}
+		
+		input[type="text"]{
+			padding: 5px 5px;
+			border-radius: 5px;
+			border: 0;
+		}
+		
+		.container{
+			border: 0.1px solid #c7c7c7;
+			margin: auto auto;
+			background-image: linear-gradient(139deg, #7014d5, #22e8df);
+			color: #fff;
+			border-radius: 5px;
+		}
+		
+		.content{
+			display: flex;
+			flex-direction: column;
+			padding: 10px 10px;
+			margin: 10px 10px;
+		}
+		
+		.btn{
+			width: 50%;
+			text-decoration: none;
+			text-align: center;
+			color: #fff;
+			background-color: black;
+			padding: 9px 5px;
+			margin: auto;
+			border-radius: 5px;
+			transition: color,background-color 0.6s ease-in;
+		}
+		
+		.btn:hover{
+			color:#000;
+			background-color: #fff;
+			transition: color,background-color 0.6s ease-in;
+		}
+		
+		.show{
+			visibility:visible;
+		}
+		
+		.hide{
+			visibility:hidden;
+		}
+		
+		input[type="file"] {
+			display: none;
+		}
+		
+		.custom-file-upload {
+			border: 1px solid #ccc;
+			display: inline-block;
+			padding: 6px 12px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+<div class="container">
+	<div class="content">
+		<label for="myFile" class="custom-file-upload" id="filename">
+			<i class="fa fa-cloud-upload" style="padding: 0px 9px;"></i>Select file
+		</label>
+		<input type="file" id="myFile">
+	</div>
+	<div class="content">
+		<label>File Name</label>
+		<input type="text" id="fileName">
+	</div>
+	<div class="content">
+		<label>Error Mode?<input type="checkbox" id="chk" onchange="toggleErrorMode(this.checked);" /></label>
+		
+		<textarea id="errorids" class="hide"></textarea>
+	</div>
+	<div class="content">
+		<a onclick='processFile();' href="javascript:void(0);" class="btn">Process</a>
+	</div>
+</div>
+
+<script>
+function processFile(){
+	var fileName = document.getElementById("fileName");
+	var newlines=[];
+	var contentARray = [];
+	var errorReplaceIds = [];
+	if(document.getElementById('chk').checked){
+		errorReplaceIds = document.getElementById('errorids').value.split(',');
+	}
+    var theFile = document.getElementById("myFile");
+	 var myReader = new FileReader();
+	  myReader.onload = function(e) {
+	  
+		  var content = myReader.result;
+		 console.log(content);
+		 var lines = content.split("\r");
+		 //console.log(lines);
+		 lines.forEach((line)=>{
+			let str="";
+			 let characters = line.split(",");
+			 characters.forEach((character)=>{
+				if(errorReplaceIds.includes(character)){
+					str += "00558000000fdKaAAI,";
+				}
+				else{
+					str += character.trim()+",";
+				}
+				
+				
+			 });
+			 newlines.push(str.substr(0,str.length-1));
+		 });
+		 //console.log(newlines);
+		 newlines.forEach((newline)=>{
+			contentARray.push(newline.split(","));
+		});
+			  console.log(contentARray);
+			var csvFile = '';
+			contentARray.forEach((row,index)=>{
+				if(index!=0){
+					csvFile+="\n";
+				}
+				csvFile+=row.join(",");
+			});
+			console.log(csvFile);
+			var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+			// navigator.msSaveBlob(blob, 'update1.csv');
+			 var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${fileName.value}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+	  }
+	  
+	 myReader.readAsText(theFile.files[0]);
+	 
+	
+}
+
+function toggleErrorMode(runErrorMode){
+	document.getElementById('errorids').classList.toggle('show');
+	document.getElementById('errorids').classList.toggle('hide');
+}
+
+document.getElementById('myFile').addEventListener('change',function(){
+	let uploadedFileName = this.files[0] != null ? this.files[0].name : null;
+	document.getElementById('filename').innerText = uploadedFileName;
+});
+</script>
+</body>
+</html>
