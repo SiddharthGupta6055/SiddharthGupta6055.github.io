@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="src/css/timeTracker.css">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="tab">
+        <button class="tablinks" onclick="openCity(event, 'addhours')">Add</button>
+        <button class="tablinks" onclick="openCity(event, 'showreport')">Report</button>
+        <!-- <button class="tablinks" onclick="openCity(event, 'Tokyo')">Tokyo</button> -->
+      </div>
+    <div class="container">
+        
+        <div id="addhours" class="tabcontent">
+            <div class="item">
+                <label>Date</label>
+                <input type="date" id="track-date" required />
+            </div>
+            <div class="item">
+                <label>INC/ENH/Task/Email Subject</label>
+                <input type="text" id="track-work" required />
+    
+            </div>
+            <div class="item">
+                <label>Hours Spent</label>
+                <input type="number" min="0" id="track-hours" required />
+            </div>
+            <div class="item btn-holder">
+                <a href="javascript:void(0)" onclick="addTime();" class="btn">Add</a>
+            </div>
+            <!-- <div class="item btn-holder">
+                <a href="javascript:void(0)" onclick="showSavedHours();" class="btn">Show Saved Hours</a>
+            </div> -->
+        </div>
+        <div id="showreport" class="tabcontent">
+            <div class="item">
+                <label>Hours Spent</label>
+                <input type="number" min="0" id="param-type" placeholder="Greater Than..." required />
+            </div>
+            <div class="item btn-holder">
+                <a href="javascript:void(0)" onclick="showSavedHours();" class="btn">Show Saved Hours</a>
+            </div>
+            <div class="item btn-holder">
+                <a href="javascript:void(0)" onclick="showFilteredReport();" class="btn">Filter</a>
+            </div>
+        </div>
+        <!-- <div class="item detail-holder" id="detail-holder"> -->
+        <div id="myModal" class="modal">
+
+            <!-- Modal content -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <h4>Saved Hours</h4>
+                </div>
+                <div class="modal-body detail-holder">
+                    <p>Some text in the Modal Body</p>
+                    <p>Some other text...</p>
+                </div>
+                <!-- <div class="modal-footer">
+                    <h3>Modal Footer</h3>
+                </div> -->
+            </div>
+
+        </div>
+        <!-- </div> -->
+    </div>
+    <script type="text/javascript">
+        var timeTracker = {};
+        var toggleModal = false;
+        var report;
+        window.onload = () => {
+            if (localStorage.getItem('timeTracker') == null) {
+                localStorage.setItem('timeTracker', JSON.stringify(timeTracker));
+            }
+            timeTracker = JSON.parse(localStorage.getItem('timeTracker'));
+            report = new reports(timeTracker);
+            console.log('App initialized', timeTracker);
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+            span.onclick = function () {
+                modal.style.display = "none";
+                toggleModal = !toggleModal;
+            }
+
+            /*timeTracker['09/30/2021']='';
+            localStorage.setItem('timeTracker',JSON.stringify(timeTracker));*/
+        }
+
+        window.onclick = function (event) {
+            if (event.target == document.getElementById("myModal")) {
+                document.getElementById("myModal").style.display = "none";
+                toggleModal = false;
+            }
+        }
+
+        function addTime() {
+            let trackDate = document.getElementById('track-date');
+            let trackWork = document.getElementById('track-work');
+            let trackHours = document.getElementById('track-hours');
+            if (trackDate.value == '' || trackWork.value == '' || trackHours.value == '') {
+                return alert('Please enter all the information.');
+            }
+
+            if (timeTracker[`${trackDate.value}`] == null) {
+                timeTracker[`${trackDate.value}`] = [];
+            }
+            console.log(timeTracker);
+            timeTracker[`${trackDate.value}`].push({
+                'worktype': `${trackWork.value}`,
+                'hours': `${trackHours.value}`
+            });
+            setTrackerValues(timeTracker);
+        }
+
+        function setTrackerValues(tracker) {
+            localStorage.setItem('timeTracker', JSON.stringify(tracker));
+        }
+
+        function showSavedHours() {
+            document.getElementsByClassName('detail-holder')[0].innerHTML = htmlGenerator(timeTracker);
+            toggleModalPopUp();
+        }
+
+        function showFilteredReport(){
+            const param = 'hours',//document.getElementById('param-type').value,
+            //condition = document.getElementById('condition-type').value,
+            value= document.getElementById('param-type').value;
+            let filteredData = report.filterReport((data)=>{
+                if(parseFloat(data[param]) > parseFloat(value) ){
+                    return data;
+                }
+            });
+            document.getElementsByClassName('detail-holder')[0].innerHTML = htmlGenerator(filteredData);
+            toggleModalPopUp();
+        }
+
+        function htmlGenerator(dataobject){
+            let htmlSTR = '';
+            Object.keys(dataobject).forEach((date) => {
+                htmlSTR += `<details><summary>${date}</summary>`;
+                const savedHours = dataobject[date];
+                console.log(savedHours);
+                savedHours.forEach((workitem) => {
+                    htmlSTR += `<p>${workitem.worktype} - ${workitem.hours} Hrs.</p>`;
+                });
+                htmlSTR += '</details>';
+            });
+            return htmlSTR  != '' ? htmlSTR : 'No Data Found';
+        }
+
+        function toggleModalPopUp() {
+            document.getElementById("myModal").style.display = toggleModal ? 'none' : 'block';
+            toggleModal = !toggleModal;
+        }
+
+        function openCity(evt, cityName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+              tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+              tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(cityName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        class reports {
+            constructor(object) {
+                this.__object = object;
+                this.__paramType = typeof object === 'object' && Array.isArray(object) ? 'array' :
+                    typeof object === 'object' && !Array.isArray(object) ? 'object' : console.error(
+                        'INVALID_TYPE_IN_REPORT. Only objects and arrays can be passed in constructor.');
+               
+            }
+
+            get paramType() {
+                return this.__paramType;
+            }
+
+            filterReport(criteria) {
+               let __filteredData = this.__paramType === 'object' ? {} : [];
+                switch (this.__paramType) {
+                    case ('object'):
+                        Object.keys(this.__object).forEach((key) => {
+                            let data = this.__object[key];
+                            if (data.filter(a => criteria(a)).length > 0)
+                            __filteredData[key] = data.filter(a => criteria(a));
+                        })
+                        break;
+                    case ('array'):
+                        __filteredData.push(this.__object.filter(a => criteria(a)));
+                        break;
+                    default:
+                        break
+                }
+
+                return __filteredData;
+            }
+        }
+    </script>
+</body>
+
+</html>
